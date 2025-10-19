@@ -1,0 +1,11 @@
+# Cargo configuration for Polza AI Model Browser
+#
+# This sets the default build target to wasm32-unknown-unknown,
+# ensuring that cargo check, cargo clippy, and cargo build all use
+# the same target as dx build --platform web.
+#
+# This eliminates false warnings about unused mutability that occur
+# when checking with the native target but are required for wasm32.
+
+[build]
+target = "wasm32-unknown-unknown"
