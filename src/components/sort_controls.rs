@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use dioxus_i18n::t;
 
 use crate::models::{SortDirection, SortField};
 
@@ -22,7 +23,7 @@ pub fn SortControls(
                         "sort-field-button"
                     },
                     onclick: move |_| sort_field.set(SortField::Name),
-                    "Name"
+                    { t!("sort-name") }
                 }
 
                 button {
@@ -32,7 +33,7 @@ pub fn SortControls(
                         "sort-field-button"
                     },
                     onclick: move |_| sort_field.set(SortField::Created),
-                    "Created"
+                    { t!("sort-created") }
                 }
 
                 button {
@@ -42,7 +43,7 @@ pub fn SortControls(
                         "sort-field-button"
                     },
                     onclick: move |_| sort_field.set(SortField::PromptPrice),
-                    "Prompt Price"
+                    { t!("sort-prompt-price") }
                 }
 
                 button {
@@ -52,7 +53,7 @@ pub fn SortControls(
                         "sort-field-button"
                     },
                     onclick: move |_| sort_field.set(SortField::CompletionPrice),
-                    "Completion Price"
+                    { t!("sort-completion-price") }
                 }
             }
 
@@ -67,9 +68,9 @@ pub fn SortControls(
                     });
                 },
                 if *sort_direction.read() == SortDirection::Ascending {
-                    "↑ Ascending"
+                    { t!("sort-ascending") }
                 } else {
-                    "↓ Descending"
+                    { t!("sort-descending") }
                 }
             }
         }

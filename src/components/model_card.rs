@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use dioxus_i18n::t;
 
 use crate::models::Model;
 use crate::utils::{format_price_per_million, format_timestamp};
@@ -73,20 +74,20 @@ pub fn ModelCard(
 
                 // Model provider
                 if let Some(provider) = provider {
-                    span { class: "metadata-label", "Provider" }
+                    span { class: "metadata-label", { t!("label-provider") } }
                     span { class: "metadata-value", "{provider}" }
                 }
 
                 // Created timestamp
-                span { class: "metadata-label", "Created:" }
+                span { class: "metadata-label", { t!("label-created") } }
                 span { class: "metadata-value", "{format_timestamp(&model.created)}" }
 
                 // Prompt price
-                span { class: "metadata-label", "Prompt / 1M tokens:" }
+                span { class: "metadata-label", { t!("label-prompt-price") } }
                 span { class: "metadata-value price-value", "{format_price_per_million(model.pricing.prompt)}" }
 
                 // Completion price
-                span { class: "metadata-label", "Completion / 1M tokens:" }
+                span { class: "metadata-label", { t!("label-completion-price") } }
                 span { class: "metadata-value price-value", "{format_price_per_million(model.pricing.completion)}" }
             }
 
@@ -99,7 +100,7 @@ pub fn ModelCard(
                         style: "margin-top: 8px;",
                         div {
                             style: "font-size: 11px; font-weight: 600; color: #7f8c8d; margin-bottom: 4px; text-transform: uppercase;",
-                            "Canonical Slug"
+                            { t!("label-canonical-slug") }
                         }
                         div {
                             class: "canonical-slug-container",
@@ -138,9 +139,9 @@ pub fn ModelCard(
                                     }
                                 },
                                 if copied_slug.read().as_ref() == Some(&slug_for_copy) {
-                                    "✓ Copied"
+                                    { t!("button-copied") }
                                 } else {
-                                    "Copy"
+                                    { t!("button-copy") }
                                 }
                             }
                         }

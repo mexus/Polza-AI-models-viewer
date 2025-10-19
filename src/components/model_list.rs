@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use dioxus_i18n::t;
 
 use crate::models::Model;
 
@@ -15,11 +16,12 @@ pub fn ModelList(
         // Results count
         div {
             style: "margin-bottom: 15px; color: #7f8c8d; font-size: 14px;",
-            "Found {models.len()} model(s)"
+            { t!("models-found", count: models.len()) }
             if !filter.is_empty() {
                 span {
                     style: "font-weight: 600; color: #3498db;",
-                    " matching \"{filter}\""
+                    " "
+                    { t!("models-matching", filter: &filter) }
                 }
             }
         }
@@ -31,12 +33,12 @@ pub fn ModelList(
             if models.is_empty() && !filter.is_empty() {
                 div {
                     style: "text-align: center; padding: 40px; color: #95a5a6;",
-                    "😔 No models match your filter"
+                    { t!("no-models-filter") }
                 }
             } else if models.is_empty() {
                 div {
                     style: "text-align: center; padding: 40px; color: #95a5a6;",
-                    "No models available"
+                    { t!("no-models-available") }
                 }
             } else {
                 ul {

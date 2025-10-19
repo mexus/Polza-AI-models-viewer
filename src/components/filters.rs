@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use dioxus_i18n::t;
 use std::collections::HashSet;
 
 use crate::models::Modality;
@@ -17,7 +18,7 @@ pub fn FilterControls(
             style: "margin-bottom: 20px;",
             label {
                 style: "display: block; margin-bottom: 8px; font-weight: 600; color: #34495e;",
-                "Filter models:"
+                { t!("filter-label") }
             }
             div {
                 class: "filter-input-container",
@@ -26,7 +27,7 @@ pub fn FilterControls(
                     r#type: "text",
                     value: "{filter_text}",
                     oninput: move |evt| filter_text.set(evt.value().clone()),
-                    placeholder: "Type to filter models...",
+                    placeholder: "{t!(\"filter-placeholder\")}",
                 }
                 if !filter_text.read().is_empty() {
                     button {
@@ -48,7 +49,7 @@ pub fn FilterControls(
                 class: "modality-filter-group",
                 label {
                     class: "modality-filter-label",
-                    "Input Modalities:"
+                    { t!("input-modalities-label") }
                 }
                 div {
                     class: "modality-toggles",
@@ -85,7 +86,7 @@ pub fn FilterControls(
                 class: "modality-filter-group",
                 label {
                     class: "modality-filter-label",
-                    "Output Modalities:"
+                    { t!("output-modalities-label") }
                 }
                 div {
                     class: "modality-toggles",

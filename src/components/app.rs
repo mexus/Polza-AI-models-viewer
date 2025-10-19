@@ -1,4 +1,6 @@
 use dioxus::prelude::*;
+use dioxus_i18n::prelude::*;
+use dioxus_i18n::t;
 use std::collections::{BTreeSet, HashSet};
 
 #[cfg(target_arch = "wasm32")]
@@ -6,6 +8,7 @@ use gloo_console::log;
 
 use crate::api::fetch_models;
 use crate::cache::clear_cache;
+use crate::i18n::init_i18n;
 use crate::models::{Modality, Model, SortDirection, SortField};
 use crate::utils::{has_all_modalities, matches_any_token_sequence, tokenize};
 
@@ -17,6 +20,9 @@ use super::styles::GlobalStyles;
 
 #[component]
 pub fn App() -> Element {
+    // Initialize i18n
+    let i18n = use_init_i18n(init_i18n);
+
     // State for the filter input
     let filter_text = use_signal(String::new);
 
@@ -52,7 +58,7 @@ pub fn App() -> Element {
                 style: "display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;",
                 h1 {
                     style: "color: #2c3e50; margin: 0;",
-                    "Polza AI Models"
+                    { t!("app-title") }
                 }
                 {
                     // Auto-clear is_refreshing when data loads
@@ -88,9 +94,9 @@ pub fn App() -> Element {
                                 models_resource.restart();
                             },
                             if is_loading {
-                                "⏳ Refreshing..."
+                                { t!("button-refreshing") }
                             } else {
-                                "🔄 Refresh"
+                                { t!("button-refresh") }
                             }
                         }
                     }
@@ -99,7 +105,7 @@ pub fn App() -> Element {
 
             p {
                 style: "color: #7f8c8d; margin-bottom: 30px;",
-                "Browse and filter available AI models"
+                { t!("app-subtitle") }
             }
 
             // Content area - shows loading, error, or results
@@ -207,7 +213,7 @@ pub fn App() -> Element {
                             }
                             div {
                                 style: "color: #e74c3c; font-weight: 600; margin-bottom: 8px;",
-                                "Failed to load models"
+                                { t!("error-failed-load") }
                             }
                             div {
                                 style: "color: #7f8c8d; font-size: 14px; margin-bottom: 20px;",
@@ -216,7 +222,7 @@ pub fn App() -> Element {
                             button {
                                 class: "retry-button",
                                 onclick: move |_| models_resource.restart(),
-                                "🔄 Retry"
+                                { t!("button-retry") }
                             }
                         }
                     },
@@ -229,7 +235,7 @@ pub fn App() -> Element {
                             }
                             div {
                                 style: "color: #7f8c8d;",
-                                "Loading models..."
+                                { t!("loading-models") }
                             }
                         }
                     }
@@ -247,7 +253,43 @@ pub fn App() -> Element {
             // Footer
             div {
                 style: "margin-top: 30px; text-align: center; color: #95a5a6; font-size: 13px;",
-                "Built with Dioxus 🦀 | Data from Polza AI API"
+                div {
+                    style: "margin-bottom: 10px;",
+                    { t!("footer-text") }
+                }
+                // Language switcher
+                {
+                    let mut i18n_copy = i18n.to_owned();
+                    rsx! {
+                        button {
+                            class: "language-switcher",
+                            style: "padding: 6px 12px; font-size: 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s;",
+                            onclick: move |_| {
+                                use unic_langid::langid;
+                                use crate::i18n::save_language_preference;
+
+                                let current_lang = i18n_copy.language().clone();
+                                let new_lang = if current_lang == langid!("en-US") {
+                                    langid!("ru-RU")
+                                } else {
+                                    langid!("en-US")
+                                };
+
+                                #[cfg(target_arch = "wasm32")]
+                                gloo_console::log!(
+                                    "[i18n] Switching language from",
+                                    current_lang.to_string(),
+                                    "to",
+                                    new_lang.to_string()
+                                );
+
+                                save_language_preference(&new_lang);
+                                i18n_copy.set_language(new_lang);
+                            },
+                            { t!("language-code") }
+                        }
+                    }
+                }
             }
         }
     }

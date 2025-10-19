@@ -3,6 +3,7 @@
 pub mod api;
 pub mod cache;
 pub mod components;
+pub mod i18n;
 pub mod models;
 pub mod utils;
 
