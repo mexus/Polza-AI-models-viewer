@@ -3,6 +3,7 @@ use dioxus_i18n::prelude::*;
 use unic_langid::langid;
 
 /// Storage key for persisting language preference
+#[cfg(target_arch = "wasm32")]
 const LANGUAGE_STORAGE_KEY: &str = "polza-models-language";
 
 /// Initialize i18n with browser detection and LocalStorage persistence

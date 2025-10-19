@@ -38,15 +38,18 @@ A web application built with Dioxus that provides an interactive browser for AI 
 - **Responsive Design**: Clean, modern UI that works across different screen sizes
 - **Interactive UI**: Hover effects and smooth transitions for better user experience
 - **Manual Refresh**: Clear cache and reload data with the refresh button
+- **Multi-language Support**: English and Russian localization with automatic browser detection and manual language switching
 
 ## Tech Stack
 
 - **[Dioxus](https://dioxuslabs.com/)**: React-like framework for building cross-platform user interfaces in Rust
+- **[dioxus-i18n](https://docs.rs/dioxus-i18n/)**: Internationalization support based on Mozilla Fluent Project
+- **[unic-langid](https://docs.rs/unic-langid/)**: Language identifier handling for locale management
 - **[reqwest](https://docs.rs/reqwest/)**: HTTP client for async API requests
 - **[serde](https://serde.rs/)**: Serialization/deserialization of JSON data
 - **[rust_decimal](https://docs.rs/rust_decimal/)**: Precise decimal handling for pricing information
 - **[time](https://docs.rs/time/)**: Date/time handling and formatting
-- **[gloo-storage](https://docs.rs/gloo-storage/)**: LocalStorage API for web caching (wasm32 only)
+- **[gloo-storage](https://docs.rs/gloo-storage/)**: LocalStorage API for web caching and language preference persistence (wasm32 only)
 - **[gloo-console](https://docs.rs/gloo-console/)**: Console logging for browser debugging (wasm32 only)
 - **[web-sys](https://docs.rs/web-sys/)**: Web APIs for clipboard functionality (wasm32 only)
 
@@ -55,6 +58,9 @@ A web application built with Dioxus that provides an interactive browser for AI 
 ```
 polza-models/
 ├─ assets/            # Static assets (images, fonts, etc.)
+├─ locales/           # Translation files (Fluent FTL format)
+│  ├─ en-US.ftl       # English translations
+│  └─ ru-RU.ftl       # Russian translations
 ├─ src/
 │  ├─ api/            # API client and data fetching
 │  │  ├─ client.rs    # API endpoint integration
@@ -72,6 +78,8 @@ polza-models/
 │  │  ├─ sort_controls.rs # Sort field and direction controls
 │  │  ├─ styles.rs    # Global CSS styles
 │  │  └─ mod.rs
+│  ├─ i18n/           # Internationalization module
+│  │  └─ mod.rs       # i18n config, browser detection, language switching
 │  ├─ models/         # Data models and type definitions
 │  │  ├─ api.rs       # API response types
 │  │  ├─ architecture.rs  # Model architecture and modalities
@@ -279,6 +287,75 @@ The application provides flexible sorting controls to organize filtered results:
 - **Storage**: Browser localStorage (web platform only)
 - **Invalidation**: Manual refresh button or expired cache
 - **Benefits**: Faster load times, reduced API calls, offline-like experience
+
+### Localization
+
+The application supports multiple languages with automatic detection and manual switching capabilities.
+
+**Supported Languages**:
+- **English** (`en-US`): Default language
+- **Russian** (`ru-RU`): Full UI translation including all labels, messages, and dynamic content
+
+**Language Detection**:
+- **Automatic**: On first visit, the application detects your browser's preferred language
+- **Persistent**: Your language choice is saved to localStorage and remembered across sessions
+- **Fallback**: Defaults to English if the browser language is not Russian
+
+**Manual Language Switching**:
+- **Toggle Button**: Located in the footer of the application
+- **Visual Indicator**: Shows current language code ("EN" or "РУ")
+- **One-Click**: Instantly switches between English and Russian
+- **Persistent**: Choice is automatically saved to localStorage
+
+**Translation System**:
+- **Based on**: Mozilla's [Project Fluent](https://projectfluent.org/) via `dioxus-i18n`
+- **Format**: FTL (Fluent Translation List) files for natural, grammatically-correct translations
+- **Variable Interpolation**: Supports dynamic content like `"Found {$count} model(s)"`
+- **File Locations**:
+  - English: `locales/en-US.ftl`
+  - Russian: `locales/ru-RU.ftl`
+
+**Translation Coverage**:
+All user-facing text is fully translated, including:
+- Application title, subtitle, and footer
+- Filter controls (text filter, modality labels, placeholders)
+- Sort controls (field names, direction indicators)
+- Model card labels (provider, created date, pricing)
+- Modal sections (basic info, pricing, architecture, parameters)
+- Loading states, error messages, and empty states
+- Button labels (Copy, Refresh, Retry)
+- Dynamic messages with variables
+
+**Adding New Languages**:
+
+To add support for additional languages:
+
+1. Create a new FTL file in `locales/` (e.g., `es-ES.ftl` for Spanish)
+2. Copy the structure from `en-US.ftl` and translate all strings
+3. Update `src/i18n/mod.rs`:
+   ```rust
+   I18nConfig::new(initial_language)
+       .with_locale(Locale::new_static(
+           langid!("en-US"),
+           include_str!("../../locales/en-US.ftl"),
+       ))
+       .with_locale(Locale::new_static(
+           langid!("ru-RU"),
+           include_str!("../../locales/ru-RU.ftl"),
+       ))
+       .with_locale(Locale::new_static(
+           langid!("es-ES"),  // Add your new language
+           include_str!("../../locales/es-ES.ftl"),
+       ))
+   ```
+4. Update the language detection and toggle logic in `src/i18n/mod.rs`
+5. Add language name and code translations to all FTL files
+
+**Technical Details**:
+- Translations are embedded in the WASM binary at compile time using `include_str!()`
+- No runtime file loading required - fully offline-capable
+- Zero performance overhead - translations are resolved at render time
+- Type-safe - missing translation keys cause compile-time errors (when using `t!` macro)
 
 ## Build Target Configuration
 

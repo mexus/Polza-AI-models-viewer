@@ -18,7 +18,7 @@ output-modalities-label = Выходные модальности:
 sort-name = Название
 sort-created = Дата создания
 sort-prompt-price = Цена промпта
-sort-completion-price = Цена завершения
+sort-completion-price = Цена генерации
 sort-ascending = ↑ По возрастанию
 sort-descending = ↓ По убыванию
 
@@ -27,7 +27,7 @@ label-provider = Провайдер
 label-created = Создано:
 label-prompt-price = Промпт / 1M токенов:
 label-completion-price = Завершение / 1M токенов:
-label-canonical-slug = Канонический слаг
+label-canonical-slug = Канонический идентификатор
 button-copy = Копировать
 button-copied = ✓ Скопировано
 
@@ -47,7 +47,7 @@ section-parameters = Поддерживаемые параметры
 # Modal - Labels
 modal-label-provider = Провайдер:
 modal-label-created = Создано:
-modal-label-canonical-slug = Канонический слаг:
+modal-label-canonical-slug = Канонический идентификатор:
 modal-label-context-length = Длина контекста:
 modal-label-max-completion = Максимум токенов завершения:
 modal-label-moderated = Модерация:

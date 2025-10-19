@@ -51,6 +51,11 @@ pub async fn fetch_models() -> Result<ApiResponse, reqwest::Error> {
             ));
         }
     }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let _ = original_count;
+        let _ = filtered_count;
+    }
 
     filtered_response
         .data
