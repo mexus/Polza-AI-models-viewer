@@ -11,6 +11,7 @@ pub fn ModelCard(
     copied_slug: Signal<Option<String>>,
 ) -> Element {
     let slug = model.canonical_slug.clone();
+    let provider = model.provider().map(str::to_owned);
 
     rsx! {
         li {
@@ -69,6 +70,12 @@ pub fn ModelCard(
             // Metadata grid
             div {
                 class: "model-metadata",
+
+                // Model provider
+                if let Some(provider) = provider {
+                    span { class: "metadata-label", "Provider" }
+                    span { class: "metadata-value", "{provider}" }
+                }
 
                 // Created timestamp
                 span { class: "metadata-label", "Created:" }

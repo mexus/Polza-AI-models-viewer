@@ -49,7 +49,7 @@ pub fn ModelList(
                                     model: model_clone,
                                     index: index,
                                     on_click: move |m: Model| on_select.call(m),
-                                    copied_slug: copied_slug
+                                    copied_slug: copied_slug,
                                 }
                             }
                         }

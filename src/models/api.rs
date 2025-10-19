@@ -10,6 +10,7 @@ pub struct ApiResponse {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Model {
     pub name: String,
+    pub id: String,
     #[serde(with = "time::serde::timestamp")]
     pub created: time::OffsetDateTime,
     pub canonical_slug: String,
@@ -20,6 +21,19 @@ pub struct Model {
 
     pub top_provider: TopProvider,
     pub supported_parameters: Vec<String>,
+}
+
+impl Model {
+    /// Extracts the model provider (ignoring the 'openrouter' prefix).
+    pub fn provider(&self) -> Option<&str> {
+        let mut parts = self.id.split('/');
+        let provider = parts.next()?;
+        if provider == "openrouter" {
+            parts.next()
+        } else {
+            Some(provider)
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

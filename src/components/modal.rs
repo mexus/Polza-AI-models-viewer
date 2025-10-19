@@ -9,6 +9,7 @@ use crate::utils::{
 pub fn ModelModal(model: Model, on_close: EventHandler<()>) -> Element {
     #[cfg_attr(not(target_arch = "wasm32"), allow(unused_mut))]
     let mut copied = use_signal(|| false);
+    let provider = model.provider().map(str::to_owned);
 
     rsx! {
         div {
@@ -52,6 +53,12 @@ pub fn ModelModal(model: Model, on_close: EventHandler<()>) -> Element {
                         div { class: "modal-section-title", "Basic Information" }
                         div {
                             class: "modal-grid",
+
+                            if let Some(provider) = provider {
+                                span { class: "modal-label", "Provider:" }
+                                span { class: "modal-value", "{provider}" }
+                            }
+
                             span { class: "modal-label", "Created:" }
                             span { class: "modal-value", "{format_timestamp(&model.created)}" }
                         }
