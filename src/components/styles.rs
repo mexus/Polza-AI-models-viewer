@@ -5,9 +5,16 @@ pub fn GlobalStyles() -> Element {
     rsx! {
         style {
             "
+            .filter-input-container {{
+                position: relative;
+                display: flex;
+                align-items: center;
+            }}
+
             .filter-input {{
                 width: 100%;
                 padding: 12px;
+                padding-right: 40px;
                 font-size: 16px;
                 border: 2px solid #e0e0e0;
                 border-radius: 6px;
@@ -18,6 +25,28 @@ pub fn GlobalStyles() -> Element {
             .filter-input:focus {{
                 outline: none;
                 border-color: #3498db;
+            }}
+
+            .filter-clear-button {{
+                position: absolute;
+                right: 8px;
+                background: none;
+                border: none;
+                font-size: 24px;
+                color: #95a5a6;
+                cursor: pointer;
+                padding: 4px 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 4px;
+                transition: background 0.2s, color 0.2s;
+                line-height: 1;
+            }}
+
+            .filter-clear-button:hover {{
+                background: #f0f0f0;
+                color: #2c3e50;
             }}
 
             .model-item {{

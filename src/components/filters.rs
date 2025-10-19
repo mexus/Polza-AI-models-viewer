@@ -19,12 +19,23 @@ pub fn FilterControls(
                 style: "display: block; margin-bottom: 8px; font-weight: 600; color: #34495e;",
                 "Filter models:"
             }
-            input {
-                class: "filter-input",
-                r#type: "text",
-                value: "{filter_text}",
-                oninput: move |evt| filter_text.set(evt.value().clone()),
-                placeholder: "Type to filter models...",
+            div {
+                class: "filter-input-container",
+                input {
+                    class: "filter-input",
+                    r#type: "text",
+                    value: "{filter_text}",
+                    oninput: move |evt| filter_text.set(evt.value().clone()),
+                    placeholder: "Type to filter models...",
+                }
+                if !filter_text.read().is_empty() {
+                    button {
+                        class: "filter-clear-button",
+                        r#type: "button",
+                        onclick: move |_| filter_text.set(String::new()),
+                        "×"
+                    }
+                }
             }
         }
 
