@@ -166,15 +166,22 @@ pub fn ModelModal(model: Model, on_close: EventHandler<()>) -> Element {
                     }
 
                     // Architecture Section
-                    ModalitySection {
-                        title: "Input Modalities",
-                        modalities: model.architecture.input_modalities.clone()
+                    div {
+                        class: "modal-section",
+
+                        div { class: "modal-section-title", "Architecture" }
+
+                        ModalitySection {
+                            title: "Input Modalities",
+                            modalities: model.architecture.input_modalities.clone()
+                        }
+
+                        ModalitySection {
+                            title: "Output Modalities",
+                            modalities: model.architecture.output_modalities.clone()
+                        }
                     }
 
-                    ModalitySection {
-                        title: "Output Modalities",
-                        modalities: model.architecture.output_modalities.clone()
-                    }
 
                     // Supported Parameters Section
                     div {
@@ -207,24 +214,20 @@ pub fn ModelModal(model: Model, on_close: EventHandler<()>) -> Element {
 fn ModalitySection(title: String, modalities: Vec<Modality>) -> Element {
     rsx! {
         div {
-            class: "modal-section",
-            div { class: "modal-section-title", "Architecture" }
+            style: if title == "Input Modalities" { "margin-bottom: 16px;" } else { "" },
             div {
-                style: if title == "Input Modalities" { "margin-bottom: 16px;" } else { "" },
-                div {
-                    style: "font-weight: 600; color: #7f8c8d; margin-bottom: 8px; font-size: 14px;",
-                    "{title}:"
-                }
-                div {
-                    class: "modality-badges",
-                    for modality in &modalities {
-                        {
-                            let modality_lower = format!("{:?}", modality).to_lowercase();
-                            rsx! {
-                                span {
-                                    class: "modality-badge {modality_lower}",
-                                    "{modality:?}"
-                                }
+                style: "font-weight: 600; color: #7f8c8d; margin-bottom: 8px; font-size: 14px;",
+                "{title}:"
+            }
+            div {
+                class: "modality-badges",
+                for modality in &modalities {
+                    {
+                        let modality_lower = format!("{:?}", modality).to_lowercase();
+                        rsx! {
+                            span {
+                                class: "modality-badge {modality_lower}",
+                                "{modality:?}"
                             }
                         }
                     }
