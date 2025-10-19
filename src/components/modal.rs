@@ -14,6 +14,15 @@ pub fn ModelModal(model: Model, on_close: EventHandler<()>) -> Element {
         div {
             class: "modal-overlay",
             onclick: move |_| on_close.call(()),
+            onkeydown: move |evt| {
+                if evt.key() == Key::Escape {
+                    on_close.call(());
+                }
+            },
+            tabindex: 0,
+            onmounted: move |evt| async move {
+                let _ = evt.set_focus(true).await;
+            },
 
             div {
                 class: "modal-content",
