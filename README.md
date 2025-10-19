@@ -2,6 +2,8 @@
 
 A web application built with Dioxus that provides an interactive browser for AI models available through the Polza AI API. The application features intelligent real-time filtering, caching, responsive design, and elegant error handling.
 
+**Live Demo**: [https://mexus.github.io/Polza-AI-models-viewer/](https://mexus.github.io/Polza-AI-models-viewer/)
+
 ## Features
 
 ### Core Functionality
@@ -280,6 +282,38 @@ The project supports multiple platforms through Cargo features:
   - Falls back to RFC2822 time formatting
   - No caching (could be added with file-based cache)
 - `mobile`: Mobile platforms (experimental)
+
+## Deployment
+
+The application is automatically deployed to GitHub Pages on every push to the `master` branch.
+
+### Automatic Deployment
+
+The GitHub Actions workflow (`.github/workflows/deploy.yml`) automatically:
+1. Builds the optimized WebAssembly bundle
+2. Configures the application for GitHub Pages subdirectory routing
+3. Creates client-side routing support (404.html)
+4. Deploys to the `gh-pages` branch
+
+**Deployment URL**: [https://mexus.github.io/Polza-AI-models-viewer/](https://mexus.github.io/Polza-AI-models-viewer/)
+
+### Manual Deployment
+
+You can trigger a deployment manually via the GitHub Actions UI or by pushing to master:
+
+```bash
+git push origin master
+```
+
+### First-Time Setup
+
+After creating the workflow, configure GitHub Pages:
+1. Repository **Settings** → **Pages**
+2. **Source**: Deploy from a branch
+3. **Branch**: `gh-pages` / `/ (root)`
+4. **Save**
+
+For detailed deployment documentation, troubleshooting, and technical details, see the [Deployment section in CLAUDE.md](CLAUDE.md#deployment).
 
 ## Contributing
 

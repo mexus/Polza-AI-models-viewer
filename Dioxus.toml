@@ -5,6 +5,10 @@
 # HTML title tag content
 title = "polza-models"
 
+# base_path is automatically configured during GitHub Pages deployment
+# For local development, no base_path is needed (serves from root)
+# In CI/CD, the workflow injects: base_path = "Polza-AI-models-viewer"
+
 # include `assets` in web platform
 [web.resource]
 

@@ -62,6 +62,78 @@ test-native = "test --target x86_64-unknown-linux-gnu"
 
 Then simply run `cargo test-native`.
 
+## Deployment
+
+### GitHub Pages Deployment
+
+The project is configured for automatic deployment to GitHub Pages via GitHub Actions.
+
+#### Automatic Deployment
+
+Every push to the `master` branch automatically triggers a deployment workflow:
+
+1. **Build Process**: The workflow compiles the application to WebAssembly
+2. **base_path Configuration**: Automatically injects the repository name as base_path for proper routing
+3. **Client-Side Routing**: Creates 404.html for GitHub Pages SPA support
+4. **Deployment**: Publishes to the `gh-pages` branch
+
+**Live URL**: `https://mexus.github.io/Polza-AI-models-viewer/`
+
+#### Workflow Details
+
+The deployment workflow (`.github/workflows/deploy.yml`) performs:
+- Caches Rust toolchain and cargo dependencies for faster builds
+- Dynamically configures `base_path` in `Dioxus.toml` based on repository name
+- Runs `dx bundle --release` to create optimized production build
+- Creates `404.html` copy for client-side routing support
+- Deploys to `gh-pages` branch using `peaceiris/actions-gh-pages@v4`
+
+#### Manual Deployment
+
+You can also trigger deployment manually:
+
+```bash
+# Via GitHub UI: Actions tab → Deploy to GitHub Pages → Run workflow
+
+# Or push to master branch:
+git push origin master
+```
+
+#### Local vs CI base_path Handling
+
+**Problem**: GitHub Pages subdirectory deployments require `base_path` configuration, but this breaks local `dx serve`.
+
+**Solution**: The workflow dynamically injects base_path only during CI:
+- **Local development**: No base_path in `Dioxus.toml` - serves from root (http://localhost:8080/)
+- **CI deployment**: Workflow adds `base_path = "Polza-AI-models-viewer"` automatically
+- **Result**: Both environments work correctly without manual configuration switching
+
+#### First-Time Setup
+
+After the first workflow run, configure GitHub Pages settings:
+
+1. Go to repository **Settings** → **Pages**
+2. Under **Source**, select **Deploy from a branch**
+3. Choose **gh-pages** branch and **/ (root)** directory
+4. Click **Save**
+
+The site will be available at the URL shown in the Pages settings (usually within a few minutes).
+
+#### Troubleshooting
+
+**Workflow fails with permission error:**
+- The workflow includes `permissions: contents: write` which should be sufficient
+- If issues persist, check repository Settings → Actions → General → Workflow permissions
+
+**Site shows 404 or broken routes:**
+- Verify base_path is correctly injected (check workflow logs)
+- Ensure 404.html was created (check deployment artifacts)
+- Confirm GitHub Pages is serving from gh-pages branch
+
+**Local development broken:**
+- Ensure `Dioxus.toml` does NOT have base_path uncommented locally
+- The workflow modifies it only during CI - your local file should remain unchanged
+
 ## Build Target Configuration
 
 This project is primarily a web application targeting `wasm32-unknown-unknown`. To ensure consistency between development tools and the actual build:

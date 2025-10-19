@@ -1,0 +1,73 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master  # Deploy on pushes to master branch
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write  # Required for gh-pages deployment
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Setup Dioxus CLI
+        run: cargo install dioxus-cli
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Configure base_path for GitHub Pages
+        run: |
+          # Extract repository name from GITHUB_REPOSITORY (owner/repo)
+          REPO_NAME=$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)
+          echo "Setting base_path to: $REPO_NAME"
+
+          # Add base_path to Dioxus.toml under [web.app] section
+          sed -i '/\[web\.app\]/a base_path = "'$REPO_NAME'"' Dioxus.toml
+
+          # Verify the change
+          echo "Updated Dioxus.toml:"
+          cat Dioxus.toml
+
+      - name: Build with Dioxus
+        run: dx bundle --release
+
+      - name: Create 404.html for client-side routing
+        run: |
+          cd target/dx/polza-models/release/web/public
+          cp index.html 404.html
+          echo "Created 404.html for GitHub Pages client-side routing"
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/dx/polza-models/release/web/public
+          cname: false
