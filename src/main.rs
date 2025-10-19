@@ -97,7 +97,7 @@ struct Architecture {
     output_modalities: Vec<Modality>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, PartialOrd, Ord, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, PartialOrd, Ord, Eq, Hash)]
 #[serde(rename_all = "snake_case")]
 enum Modality {
     Text,
@@ -270,10 +270,25 @@ fn matches_any_token_sequence(filter_token: &str, model_tokens: &[String]) -> bo
     false
 }
 
+// Check if model has all required modalities
+fn has_all_modalities(model_modalities: &[Modality], required: &std::collections::HashSet<Modality>) -> bool {
+    // If no modalities are required, any model passes
+    if required.is_empty() {
+        return true;
+    }
+
+    // Check if model has all required modalities
+    required.iter().all(|req| model_modalities.contains(req))
+}
+
 #[component]
 fn App() -> Element {
     // State for the filter input
     let mut filter_text = use_signal(String::new);
+
+    // State for modality filters
+    let mut selected_input_modalities = use_signal(std::collections::HashSet::<Modality>::new);
+    let mut selected_output_modalities = use_signal(std::collections::HashSet::<Modality>::new);
 
     // State for the selected model (for modal display)
     let mut selected_model = use_signal(|| None::<Model>);
@@ -378,6 +393,80 @@ fn App() -> Element {
             .modality-badge.file {{ background: #e67e22; color: white; }}
             .modality-badge.embeddings {{ background: #1abc9c; color: white; }}
             .modality-badge.audio {{ background: #e74c3c; color: white; }}
+
+            .modality-filter-section {{
+                background: white;
+                padding: 16px;
+                border-radius: 8px;
+                border: 2px solid #e0e0e0;
+                margin-bottom: 20px;
+            }}
+
+            .modality-filter-group {{
+                margin-bottom: 16px;
+            }}
+
+            .modality-filter-group:last-child {{
+                margin-bottom: 0;
+            }}
+
+            .modality-filter-label {{
+                font-weight: 600;
+                color: #34495e;
+                margin-bottom: 8px;
+                font-size: 14px;
+                display: block;
+            }}
+
+            .modality-toggles {{
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }}
+
+            .modality-toggle-button {{
+                padding: 8px 16px;
+                font-size: 13px;
+                font-weight: 600;
+                border: 2px solid #e0e0e0;
+                border-radius: 20px;
+                background: #f8f9fa;
+                color: #7f8c8d;
+                cursor: pointer;
+                transition: all 0.2s;
+                user-select: none;
+            }}
+
+            .modality-toggle-button:hover {{
+                border-color: #bdc3c7;
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }}
+
+            .modality-toggle-button.active {{
+                color: white;
+                border-color: transparent;
+            }}
+
+            .modality-toggle-button.active.text {{
+                background: #3498db;
+            }}
+
+            .modality-toggle-button.active.image {{
+                background: #9b59b6;
+            }}
+
+            .modality-toggle-button.active.file {{
+                background: #e67e22;
+            }}
+
+            .modality-toggle-button.active.embeddings {{
+                background: #1abc9c;
+            }}
+
+            .modality-toggle-button.active.audio {{
+                background: #e74c3c;
+            }}
 
             .model-metadata {{
                 display: grid;
@@ -640,6 +729,107 @@ fn App() -> Element {
                 }
             }
 
+            // Modality Filters
+            div {
+                class: "modality-filter-section",
+
+                // Input Modalities
+                div {
+                    class: "modality-filter-group",
+                    label {
+                        class: "modality-filter-label",
+                        "Input Modalities (models must have all selected):"
+                    }
+                    div {
+                        class: "modality-toggles",
+                        {
+                            let all_modalities = [
+                                Modality::Text,
+                                Modality::Image,
+                                Modality::File,
+                                Modality::Audio,
+                                Modality::Embeddings,
+                            ];
+                            rsx! {
+                                for modality in all_modalities.iter() {
+                                    {
+                                        let modality_value = *modality;
+                                        let modality_lower = format!("{:?}", modality_value).to_lowercase();
+                                        let is_selected = selected_input_modalities.read().contains(&modality_value);
+                                        rsx! {
+                                            button {
+                                                class: if is_selected {
+                                                    "modality-toggle-button active {modality_lower}"
+                                                } else {
+                                                    "modality-toggle-button"
+                                                },
+                                                onclick: move |_| {
+                                                    let mut modalities = selected_input_modalities.write();
+                                                    if modalities.contains(&modality_value) {
+                                                        modalities.remove(&modality_value);
+                                                    } else {
+                                                        modalities.insert(modality_value);
+                                                    }
+                                                },
+                                                "{modality_value:?}"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Output Modalities
+                div {
+                    class: "modality-filter-group",
+                    label {
+                        class: "modality-filter-label",
+                        "Output Modalities (models must have all selected):"
+                    }
+                    div {
+                        class: "modality-toggles",
+                        {
+                            let all_modalities = [
+                                Modality::Text,
+                                Modality::Image,
+                                Modality::File,
+                                Modality::Audio,
+                                Modality::Embeddings,
+                            ];
+                            rsx! {
+                                for modality in all_modalities.iter() {
+                                    {
+                                        let modality_value = *modality;
+                                        let modality_lower = format!("{:?}", modality_value).to_lowercase();
+                                        let is_selected = selected_output_modalities.read().contains(&modality_value);
+                                        rsx! {
+                                            button {
+                                                class: if is_selected {
+                                                    "modality-toggle-button active {modality_lower}"
+                                                } else {
+                                                    "modality-toggle-button"
+                                                },
+                                                onclick: move |_| {
+                                                    let mut modalities = selected_output_modalities.write();
+                                                    if modalities.contains(&modality_value) {
+                                                        modalities.remove(&modality_value);
+                                                    } else {
+                                                        modalities.insert(modality_value);
+                                                    }
+                                                },
+                                                "{modality_value:?}"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Content area - shows loading, error, or results
             div {
                 style: "background: #f8f9fa; border-radius: 8px; padding: 20px; min-height: 200px;",
@@ -648,12 +838,30 @@ fn App() -> Element {
                     Some(Ok(response)) => {
                         let filter = filter_text.read();
                         let filter_tokens = tokenize(&filter);
+                        let input_modalities = selected_input_modalities.read();
+                        let output_modalities = selected_output_modalities.read();
+
                         let filtered_models: Vec<_> = response.data.iter()
                             .filter(|model| {
-                                // All filter tokens must match (AND logic)
-                                filter_tokens.iter().all(|filter_token| {
+                                // Text filter: All filter tokens must match (AND logic)
+                                let text_matches = filter_tokens.iter().all(|filter_token| {
                                     matches_any_token_sequence(filter_token, &model.name_tokens)
-                                })
+                                });
+
+                                // Input modality filter: Model must have all selected input modalities
+                                let input_matches = has_all_modalities(
+                                    &model.architecture.input_modalities,
+                                    &input_modalities
+                                );
+
+                                // Output modality filter: Model must have all selected output modalities
+                                let output_matches = has_all_modalities(
+                                    &model.architecture.output_modalities,
+                                    &output_modalities
+                                );
+
+                                // All filters must pass (AND logic)
+                                text_matches && input_matches && output_matches
                             })
                             .collect();
 
@@ -1218,5 +1426,110 @@ mod test {
         // Empty tokens - nothing to match against
         let empty_tokens: Vec<String> = vec![];
         assert!(!matches_any_token_sequence("test", &empty_tokens));
+    }
+
+    #[test]
+    fn test_has_all_modalities_empty_required() {
+        use std::collections::HashSet;
+        // Empty required set should match any model (no filter applied)
+        let model_modalities = vec![Modality::Text, Modality::Image];
+        let required = HashSet::new();
+        assert!(has_all_modalities(&model_modalities, &required));
+
+        // Even empty model modalities should pass if nothing is required
+        let empty_modalities: Vec<Modality> = vec![];
+        assert!(has_all_modalities(&empty_modalities, &required));
+    }
+
+    #[test]
+    fn test_has_all_modalities_single_required() {
+        use std::collections::HashSet;
+        let model_modalities = vec![Modality::Text, Modality::Image, Modality::Audio];
+
+        // Model has the required modality
+        let mut required = HashSet::new();
+        required.insert(Modality::Text);
+        assert!(has_all_modalities(&model_modalities, &required));
+
+        // Model doesn't have the required modality
+        let mut required_missing = HashSet::new();
+        required_missing.insert(Modality::Embeddings);
+        assert!(!has_all_modalities(&model_modalities, &required_missing));
+    }
+
+    #[test]
+    fn test_has_all_modalities_multiple_required() {
+        use std::collections::HashSet;
+        let model_modalities = vec![Modality::Text, Modality::Image, Modality::Audio];
+
+        // Model has all required modalities
+        let mut required = HashSet::new();
+        required.insert(Modality::Text);
+        required.insert(Modality::Image);
+        assert!(has_all_modalities(&model_modalities, &required));
+
+        // Model missing one of the required modalities
+        let mut required_partial = HashSet::new();
+        required_partial.insert(Modality::Text);
+        required_partial.insert(Modality::Embeddings);
+        assert!(!has_all_modalities(&model_modalities, &required_partial));
+
+        // Model missing all required modalities
+        let mut required_none = HashSet::new();
+        required_none.insert(Modality::Embeddings);
+        required_none.insert(Modality::File);
+        assert!(!has_all_modalities(&model_modalities, &required_none));
+    }
+
+    #[test]
+    fn test_has_all_modalities_all_modalities() {
+        use std::collections::HashSet;
+        // Model with all modality types
+        let model_modalities = vec![
+            Modality::Text,
+            Modality::Image,
+            Modality::File,
+            Modality::Audio,
+            Modality::Embeddings,
+        ];
+
+        // Require all of them
+        let mut required_all = HashSet::new();
+        required_all.insert(Modality::Text);
+        required_all.insert(Modality::Image);
+        required_all.insert(Modality::File);
+        required_all.insert(Modality::Audio);
+        required_all.insert(Modality::Embeddings);
+        assert!(has_all_modalities(&model_modalities, &required_all));
+    }
+
+    #[test]
+    fn test_has_all_modalities_empty_model() {
+        use std::collections::HashSet;
+        // Model with no modalities
+        let empty_modalities: Vec<Modality> = vec![];
+
+        // Requiring any modality should fail
+        let mut required = HashSet::new();
+        required.insert(Modality::Text);
+        assert!(!has_all_modalities(&empty_modalities, &required));
+    }
+
+    #[test]
+    fn test_has_all_modalities_extra_modalities() {
+        use std::collections::HashSet;
+        // Model with more modalities than required (should still pass)
+        let model_modalities = vec![
+            Modality::Text,
+            Modality::Image,
+            Modality::Audio,
+            Modality::Embeddings,
+        ];
+
+        // Only require a subset
+        let mut required = HashSet::new();
+        required.insert(Modality::Text);
+        required.insert(Modality::Image);
+        assert!(has_all_modalities(&model_modalities, &required));
     }
 }

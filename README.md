@@ -11,6 +11,11 @@ A web application built with Dioxus that provides an interactive browser for AI 
   - camelCase and PascalCase splitting
   - Case-insensitive matching
   - Consecutive token matching
+- **Modality Filtering**: Interactive toggle-button filters for model capabilities:
+  - Filter by input modalities (Text, Image, File, Audio, Embeddings)
+  - Filter by output modalities (Text, Image, File, Audio, Embeddings)
+  - AND logic: models must have ALL selected modalities
+  - Works in combination with text search
 - **API Integration**: Fetches live data from the Polza AI models endpoint
 - **Smart Data Handling**: Automatically filters out models with empty pricing information
 - **Performance Caching**: 1-hour localStorage cache to minimize API calls and improve load times
@@ -109,7 +114,7 @@ dx build --release --platform desktop
 
 ### Testing
 
-The project includes comprehensive unit tests for the tokenization and filtering logic (15 tests total).
+The project includes comprehensive unit tests for the tokenization and filtering logic (21 tests total).
 
 **Important**: Due to the default `wasm32-unknown-unknown` target, tests must be run with an explicit native target:
 
@@ -129,6 +134,7 @@ cargo test --target $(rustc -vV | grep host | cut -d' ' -f2)
 **Test Coverage**:
 - `tokenize()` function: Basic tokenization, delimiters, camelCase splitting, edge cases, Unicode support
 - `matches_any_token_sequence()` function: Single token matching, consecutive token matching, prefix matching
+- `has_all_modalities()` function: Empty filters, single/multiple modality requirements, edge cases
 - Integration tests: Real-world filtering scenarios including the parentheses bug fix
 
 ### Code Quality
@@ -172,6 +178,41 @@ The application uses a sophisticated tokenization system that makes searching in
 **Multi-word Filters**: All search terms must match (AND logic)
 - Search: `"google flash"` → Matches: `"Google: Gemini 2.5 Flash"` ✓
 - Search: `"google claude"` → Matches: `"Google: Gemini 2.5 Flash"` ✗
+
+### Modality Filtering
+
+The application provides powerful filtering based on model input and output capabilities:
+
+**Available Modalities**:
+- **Text**: Traditional text-based input/output
+- **Image**: Image processing and generation
+- **File**: File handling capabilities
+- **Audio**: Audio processing and generation
+- **Embeddings**: Vector embeddings for semantic search
+
+**Filter Behavior**:
+- **Separate Filters**: Independent controls for input and output modalities
+- **AND Logic**: Models must have ALL selected modalities in each category
+- **Visual Feedback**: Toggle buttons use color-coding matching the modality badges:
+  - Text: Blue
+  - Image: Purple
+  - File: Orange
+  - Audio: Red
+  - Embeddings: Teal
+- **Combined with Text Search**: All filters (text + input + output) work together using AND logic
+
+**Example Use Cases**:
+1. Find models that accept both text and images as input:
+   - Select "Text" and "Image" under Input Modalities
+
+2. Find models that can output both text and images:
+   - Select "Text" and "Image" under Output Modalities
+
+3. Find multimodal models with specific capabilities:
+   - Text search: "gemini"
+   - Input: "Text" + "Image"
+   - Output: "Text" + "Image"
+   - Result: Only Gemini models that accept and produce both text and images
 
 ### Caching Strategy
 
