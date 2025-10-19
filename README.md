@@ -16,6 +16,10 @@ A web application built with Dioxus that provides an interactive browser for AI 
   - Filter by output modalities (Text, Image, File, Audio, Embeddings)
   - AND logic: models must have ALL selected modalities
   - Works in combination with text search
+- **Flexible Sorting**: Modern segmented control for sorting filtered results:
+  - Sort by Name (alphabetical), Created Date (chronological), Prompt Price, or Completion Price
+  - Toggle between ascending (↑) and descending (↓) order
+  - Default: Prompt Price (High to Low)
 - **API Integration**: Fetches live data from the Polza AI models endpoint
 - **Smart Data Handling**: Automatically filters out models with empty pricing information
 - **Performance Caching**: 1-hour localStorage cache to minimize API calls and improve load times
@@ -213,6 +217,37 @@ The application provides powerful filtering based on model input and output capa
    - Input: "Text" + "Image"
    - Output: "Text" + "Image"
    - Result: Only Gemini models that accept and produce both text and images
+
+### Sorting
+
+The application provides flexible sorting controls to organize filtered results:
+
+**Sort Fields**:
+- **Name**: Alphabetical order (A-Z ascending, Z-A descending)
+- **Created**: Chronological order by model creation date (newest first descending, oldest first ascending)
+- **Prompt Price**: Cost per million input tokens (highest/lowest first)
+- **Completion Price**: Cost per million output tokens (highest/lowest first)
+
+**User Interface**:
+- **Segmented Control**: Modern button group showing all four sort options
+- **Direction Toggle**: Separate button to switch between ascending (↑) and descending (↓) order
+- **Visual Feedback**: Active sort field highlighted in blue, clear indication of current direction
+- **Default Sort**: Prompt Price (High to Low) - shows premium/most capable models first
+
+**Behavior**:
+- Sorting applies to filtered results only
+- Sort settings persist across filter changes
+- Combines seamlessly with text search and modality filters
+
+**Example Use Cases**:
+1. Find cheapest models for input processing:
+   - Sort by "Prompt Price" + "↑ Ascending"
+
+2. Browse newest models first:
+   - Sort by "Created" + "↓ Descending"
+
+3. Find models alphabetically:
+   - Sort by "Name" + "↑ Ascending"
 
 ### Caching Strategy
 

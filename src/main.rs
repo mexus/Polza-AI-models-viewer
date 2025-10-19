@@ -107,6 +107,20 @@ enum Modality {
     Embeddings,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum SortField {
+    Name,
+    Created,
+    PromptPrice,
+    CompletionPrice,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum SortDirection {
+    Ascending,
+    Descending,
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 struct Pricing {
     prompt: Decimal,
@@ -290,6 +304,10 @@ fn App() -> Element {
     let mut selected_input_modalities = use_signal(std::collections::HashSet::<Modality>::new);
     let mut selected_output_modalities = use_signal(std::collections::HashSet::<Modality>::new);
 
+    // State for sorting
+    let mut sort_field = use_signal(|| SortField::PromptPrice);
+    let mut sort_direction = use_signal(|| SortDirection::Descending);
+
     // State for the selected model (for modal display)
     let mut selected_model = use_signal(|| None::<Model>);
 
@@ -394,6 +412,36 @@ fn App() -> Element {
             .modality-badge.embeddings {{ background: #1abc9c; color: white; }}
             .modality-badge.audio {{ background: #e74c3c; color: white; }}
 
+            .modality-badge-outline {{
+                display: inline-block;
+                padding: 4px 10px;
+                font-size: 12px;
+                font-weight: 500;
+                border-radius: 12px;
+                background: transparent;
+                border: 2px solid #bdc3c7;
+                color: #7f8c8d;
+            }}
+
+            .modality-badge-outline.text {{ border-color: #3498db; color: #3498db; }}
+            .modality-badge-outline.image {{ border-color: #9b59b6; color: #9b59b6; }}
+            .modality-badge-outline.file {{ border-color: #e67e22; color: #e67e22; }}
+            .modality-badge-outline.embeddings {{ border-color: #1abc9c; color: #1abc9c; }}
+            .modality-badge-outline.audio {{ border-color: #e74c3c; color: #e74c3c; }}
+
+            .modality-separator {{
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 4px 8px;
+                font-size: 14px;
+                font-weight: 700;
+                border-radius: 10px;
+                background: #ecf0f1;
+                color: #7f8c8d;
+                margin: 0 4px;
+            }}
+
             .modality-filter-section {{
                 background: white;
                 padding: 16px;
@@ -468,6 +516,68 @@ fn App() -> Element {
                 background: #e74c3c;
             }}
 
+            .sort-controls-container {{
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 16px;
+                flex-wrap: wrap;
+            }}
+
+            .sort-field-group {{
+                display: flex;
+                border-radius: 6px;
+                overflow: hidden;
+                border: 2px solid #e0e0e0;
+            }}
+
+            .sort-field-button {{
+                padding: 8px 16px;
+                font-size: 13px;
+                font-weight: 600;
+                background: #f8f9fa;
+                color: #7f8c8d;
+                border: none;
+                border-right: 1px solid #e0e0e0;
+                cursor: pointer;
+                transition: all 0.2s;
+                user-select: none;
+            }}
+
+            .sort-field-button:last-child {{
+                border-right: none;
+            }}
+
+            .sort-field-button:hover {{
+                background: #ecf0f1;
+            }}
+
+            .sort-field-button.active {{
+                background: #3498db;
+                color: white;
+            }}
+
+            .sort-direction-button {{
+                padding: 8px 16px;
+                font-size: 13px;
+                font-weight: 600;
+                border: 2px solid #e0e0e0;
+                border-radius: 6px;
+                background: #f8f9fa;
+                color: #7f8c8d;
+                cursor: pointer;
+                transition: all 0.2s;
+                user-select: none;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }}
+
+            .sort-direction-button:hover {{
+                background: #ecf0f1;
+                border-color: #bdc3c7;
+            }}
+
             .model-metadata {{
                 display: grid;
                 grid-template-columns: auto 1fr;
@@ -475,6 +585,32 @@ fn App() -> Element {
                 font-size: 13px;
                 color: #555;
                 margin-bottom: 10px;
+            }}
+
+            .model-list-container {{
+                max-height: 600px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                scroll-behavior: smooth;
+                padding-right: 4px;
+            }}
+
+            .model-list-container::-webkit-scrollbar {{
+                width: 8px;
+            }}
+
+            .model-list-container::-webkit-scrollbar-track {{
+                background: #ecf0f1;
+                border-radius: 4px;
+            }}
+
+            .model-list-container::-webkit-scrollbar-thumb {{
+                background: #bdc3c7;
+                border-radius: 4px;
+            }}
+
+            .model-list-container::-webkit-scrollbar-thumb:hover {{
+                background: #95a5a6;
             }}
 
             .metadata-label {{
@@ -729,119 +865,35 @@ fn App() -> Element {
                 }
             }
 
-            // Modality Filters
-            div {
-                class: "modality-filter-section",
-
-                // Input Modalities
-                div {
-                    class: "modality-filter-group",
-                    label {
-                        class: "modality-filter-label",
-                        "Input Modalities (models must have all selected):"
-                    }
-                    div {
-                        class: "modality-toggles",
-                        {
-                            let all_modalities = [
-                                Modality::Text,
-                                Modality::Image,
-                                Modality::File,
-                                Modality::Audio,
-                                Modality::Embeddings,
-                            ];
-                            rsx! {
-                                for modality in all_modalities.iter() {
-                                    {
-                                        let modality_value = *modality;
-                                        let modality_lower = format!("{:?}", modality_value).to_lowercase();
-                                        let is_selected = selected_input_modalities.read().contains(&modality_value);
-                                        rsx! {
-                                            button {
-                                                class: if is_selected {
-                                                    "modality-toggle-button active {modality_lower}"
-                                                } else {
-                                                    "modality-toggle-button"
-                                                },
-                                                onclick: move |_| {
-                                                    let mut modalities = selected_input_modalities.write();
-                                                    if modalities.contains(&modality_value) {
-                                                        modalities.remove(&modality_value);
-                                                    } else {
-                                                        modalities.insert(modality_value);
-                                                    }
-                                                },
-                                                "{modality_value:?}"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Output Modalities
-                div {
-                    class: "modality-filter-group",
-                    label {
-                        class: "modality-filter-label",
-                        "Output Modalities (models must have all selected):"
-                    }
-                    div {
-                        class: "modality-toggles",
-                        {
-                            let all_modalities = [
-                                Modality::Text,
-                                Modality::Image,
-                                Modality::File,
-                                Modality::Audio,
-                                Modality::Embeddings,
-                            ];
-                            rsx! {
-                                for modality in all_modalities.iter() {
-                                    {
-                                        let modality_value = *modality;
-                                        let modality_lower = format!("{:?}", modality_value).to_lowercase();
-                                        let is_selected = selected_output_modalities.read().contains(&modality_value);
-                                        rsx! {
-                                            button {
-                                                class: if is_selected {
-                                                    "modality-toggle-button active {modality_lower}"
-                                                } else {
-                                                    "modality-toggle-button"
-                                                },
-                                                onclick: move |_| {
-                                                    let mut modalities = selected_output_modalities.write();
-                                                    if modalities.contains(&modality_value) {
-                                                        modalities.remove(&modality_value);
-                                                    } else {
-                                                        modalities.insert(modality_value);
-                                                    }
-                                                },
-                                                "{modality_value:?}"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
             // Content area - shows loading, error, or results
             div {
                 style: "background: #f8f9fa; border-radius: 8px; padding: 20px; min-height: 200px;",
 
                 match &*models_resource.read_unchecked() {
                     Some(Ok(response)) => {
+                        // Compute available input and output modalities from the dataset
+                        let all_input_modalities: Vec<Modality> = response.data.iter()
+                            .flat_map(|m| m.architecture.input_modalities.iter())
+                            .copied()
+                            .collect::<std::collections::BTreeSet<_>>()
+                            .into_iter()
+                            .collect();
+
+                        let all_output_modalities: Vec<Modality> = response.data.iter()
+                            .flat_map(|m| m.architecture.output_modalities.iter())
+                            .copied()
+                            .collect::<std::collections::BTreeSet<_>>()
+                            .into_iter()
+                            .collect();
+
                         let filter = filter_text.read();
                         let filter_tokens = tokenize(&filter);
                         let input_modalities = selected_input_modalities.read();
                         let output_modalities = selected_output_modalities.read();
+                        let current_sort_field = sort_field.read();
+                        let current_sort_direction = sort_direction.read();
 
-                        let filtered_models: Vec<_> = response.data.iter()
+                        let mut filtered_models: Vec<_> = response.data.iter()
                             .filter(|model| {
                                 // Text filter: All filter tokens must match (AND logic)
                                 let text_matches = filter_tokens.iter().all(|filter_token| {
@@ -865,8 +917,169 @@ fn App() -> Element {
                             })
                             .collect();
 
+                        // Sort filtered results
+                        filtered_models.sort_by(|a, b| {
+                            let comparison = match *current_sort_field {
+                                SortField::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+                                SortField::Created => a.created.cmp(&b.created),
+                                SortField::PromptPrice => a.pricing.prompt.cmp(&b.pricing.prompt),
+                                SortField::CompletionPrice => a.pricing.completion.cmp(&b.pricing.completion),
+                            };
+
+                            match *current_sort_direction {
+                                SortDirection::Ascending => comparison,
+                                SortDirection::Descending => comparison.reverse(),
+                            }
+                        });
+
                         rsx! {
                             div {
+                                // Modality Filters
+                                div {
+                                    class: "modality-filter-section",
+
+                                    // Input Modalities
+                                    div {
+                                        class: "modality-filter-group",
+                                        label {
+                                            class: "modality-filter-label",
+                                            "Input Modalities (models must have all selected):"
+                                        }
+                                        div {
+                                            class: "modality-toggles",
+                                            for modality in all_input_modalities.iter() {
+                                                {
+                                                    let modality_value = *modality;
+                                                    let modality_lower = format!("{:?}", modality_value).to_lowercase();
+                                                    let is_selected = selected_input_modalities.read().contains(&modality_value);
+                                                    rsx! {
+                                                        button {
+                                                            class: if is_selected {
+                                                                "modality-toggle-button active {modality_lower}"
+                                                            } else {
+                                                                "modality-toggle-button"
+                                                            },
+                                                            onclick: move |_| {
+                                                                let mut modalities = selected_input_modalities.write();
+                                                                if modalities.contains(&modality_value) {
+                                                                    modalities.remove(&modality_value);
+                                                                } else {
+                                                                    modalities.insert(modality_value);
+                                                                }
+                                                            },
+                                                            "{modality_value:?}"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Output Modalities
+                                    div {
+                                        class: "modality-filter-group",
+                                        label {
+                                            class: "modality-filter-label",
+                                            "Output Modalities (models must have all selected):"
+                                        }
+                                        div {
+                                            class: "modality-toggles",
+                                            for modality in all_output_modalities.iter() {
+                                                {
+                                                    let modality_value = *modality;
+                                                    let modality_lower = format!("{:?}", modality_value).to_lowercase();
+                                                    let is_selected = selected_output_modalities.read().contains(&modality_value);
+                                                    rsx! {
+                                                        button {
+                                                            class: if is_selected {
+                                                                "modality-toggle-button active {modality_lower}"
+                                                            } else {
+                                                                "modality-toggle-button"
+                                                            },
+                                                            onclick: move |_| {
+                                                                let mut modalities = selected_output_modalities.write();
+                                                                if modalities.contains(&modality_value) {
+                                                                    modalities.remove(&modality_value);
+                                                                } else {
+                                                                    modalities.insert(modality_value);
+                                                                }
+                                                            },
+                                                            "{modality_value:?}"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Sort Controls
+                                div {
+                                    class: "sort-controls-container",
+
+                                    // Sort field selector (segmented control)
+                                    div {
+                                        class: "sort-field-group",
+
+                                        button {
+                                            class: if *sort_field.read() == SortField::Name {
+                                                "sort-field-button active"
+                                            } else {
+                                                "sort-field-button"
+                                            },
+                                            onclick: move |_| sort_field.set(SortField::Name),
+                                            "Name"
+                                        }
+
+                                        button {
+                                            class: if *sort_field.read() == SortField::Created {
+                                                "sort-field-button active"
+                                            } else {
+                                                "sort-field-button"
+                                            },
+                                            onclick: move |_| sort_field.set(SortField::Created),
+                                            "Created"
+                                        }
+
+                                        button {
+                                            class: if *sort_field.read() == SortField::PromptPrice {
+                                                "sort-field-button active"
+                                            } else {
+                                                "sort-field-button"
+                                            },
+                                            onclick: move |_| sort_field.set(SortField::PromptPrice),
+                                            "Prompt Price"
+                                        }
+
+                                        button {
+                                            class: if *sort_field.read() == SortField::CompletionPrice {
+                                                "sort-field-button active"
+                                            } else {
+                                                "sort-field-button"
+                                            },
+                                            onclick: move |_| sort_field.set(SortField::CompletionPrice),
+                                            "Completion Price"
+                                        }
+                                    }
+
+                                    // Sort direction toggle
+                                    button {
+                                        class: "sort-direction-button",
+                                        onclick: move |_| {
+                                            let current = *sort_direction.read();
+                                            sort_direction.set(match current {
+                                                SortDirection::Ascending => SortDirection::Descending,
+                                                SortDirection::Descending => SortDirection::Ascending,
+                                            });
+                                        },
+                                        if *sort_direction.read() == SortDirection::Ascending {
+                                            "↑ Ascending"
+                                        } else {
+                                            "↓ Descending"
+                                        }
+                                    }
+                                }
+
                                 // Results count
                                 div {
                                     style: "margin-bottom: 15px; color: #7f8c8d; font-size: 14px;",
@@ -879,20 +1092,23 @@ fn App() -> Element {
                                     }
                                 }
 
-                                // Model list
-                                if filtered_models.is_empty() && !filter.is_empty() {
-                                    div {
-                                        style: "text-align: center; padding: 40px; color: #95a5a6;",
-                                        "😔 No models match your filter"
-                                    }
-                                } else if filtered_models.is_empty() {
-                                    div {
-                                        style: "text-align: center; padding: 40px; color: #95a5a6;",
-                                        "No models available"
-                                    }
-                                } else {
-                                    ul {
-                                        style: "list-style: none; padding: 0; margin: 0;",
+                                // Model list (scrollable container)
+                                div {
+                                    class: "model-list-container",
+
+                                    if filtered_models.is_empty() && !filter.is_empty() {
+                                        div {
+                                            style: "text-align: center; padding: 40px; color: #95a5a6;",
+                                            "😔 No models match your filter"
+                                        }
+                                    } else if filtered_models.is_empty() {
+                                        div {
+                                            style: "text-align: center; padding: 40px; color: #95a5a6;",
+                                            "No models available"
+                                        }
+                                    } else {
+                                        ul {
+                                            style: "list-style: none; padding: 0; margin: 0;",
                                         for (index, model) in filtered_models.iter().enumerate() {
                                             {
                                                 let model = (*model).clone();
@@ -910,10 +1126,31 @@ fn App() -> Element {
                                                     "{model.name}"
                                                 }
 
-                                                // Input modality badges
+                                                // Input → Output modality badges
                                                 div {
                                                     class: "modality-badges",
+
+                                                    // Input modalities (outline style)
                                                     for modality in &model.architecture.input_modalities {
+                                                        {
+                                                            let modality_lower = format!("{:?}", modality).to_lowercase();
+                                                            rsx! {
+                                                                span {
+                                                                    class: "modality-badge-outline {modality_lower}",
+                                                                    "{modality:?}"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+
+                                                    // Separator
+                                                    span {
+                                                        class: "modality-separator",
+                                                        "⇒"
+                                                    }
+
+                                                    // Output modalities (filled style)
+                                                    for modality in &model.architecture.output_modalities {
                                                         {
                                                             let modality_lower = format!("{:?}", modality).to_lowercase();
                                                             rsx! {
@@ -1004,6 +1241,7 @@ fn App() -> Element {
                                             }
                                         }
                                     }
+                                }
                                 }
                             }
                         }
