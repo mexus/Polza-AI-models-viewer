@@ -1,10 +1,13 @@
 use dioxus::prelude::*;
 
 use crate::models::{Modality, Model};
-use crate::utils::{format_price_per_invocation, format_price_per_million, format_timestamp, format_with_commas};
+use crate::utils::{
+    format_price_per_invocation, format_price_per_million, format_timestamp, format_with_commas,
+};
 
 #[component]
 pub fn ModelModal(model: Model, on_close: EventHandler<()>) -> Element {
+    #[cfg_attr(not(target_arch = "wasm32"), allow(unused_mut))]
     let mut copied = use_signal(|| false);
 
     rsx! {
@@ -72,9 +75,8 @@ pub fn ModelModal(model: Model, on_close: EventHandler<()>) -> Element {
                                                     copied.set(true);
 
                                                     // Reset after 2 seconds
-                                                    let mut copied_clone = copied;
                                                     gloo_timers::callback::Timeout::new(2000, move || {
-                                                        copied_clone.set(false);
+                                                        copied.set(false);
                                                     }).forget();
                                                 }
                                             }
