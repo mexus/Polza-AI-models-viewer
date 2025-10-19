@@ -195,10 +195,37 @@ pub fn GlobalStyles() -> Element {
                 cursor: pointer;
                 transition: all 0.2s;
                 user-select: none;
+                white-space: nowrap;
             }}
 
             .sort-field-button:last-child {{
                 border-right: none;
+            }}
+
+            /* Mobile responsive layout for sort buttons */
+            @media (max-width: 640px) {{
+                .sort-field-group {{
+                    flex-direction: column;
+                    width: 100%;
+                }}
+
+                .sort-field-button {{
+                    border-right: none;
+                    border-bottom: 1px solid #e0e0e0;
+                    padding: 12px 16px;
+                    font-size: 14px;
+                }}
+
+                .sort-field-button:last-child {{
+                    border-bottom: none;
+                }}
+
+                .sort-direction-button {{
+                    width: 100%;
+                    justify-content: center;
+                    padding: 12px 16px;
+                    font-size: 14px;
+                }}
             }}
 
             .sort-field-button:hover {{
