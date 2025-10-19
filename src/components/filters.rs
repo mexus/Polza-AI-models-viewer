@@ -48,7 +48,7 @@ pub fn FilterControls(
                 class: "modality-filter-group",
                 label {
                     class: "modality-filter-label",
-                    "Input Modalities (models must have all selected):"
+                    "Input Modalities:"
                 }
                 div {
                     class: "modality-toggles",
@@ -85,7 +85,7 @@ pub fn FilterControls(
                 class: "modality-filter-group",
                 label {
                     class: "modality-filter-label",
-                    "Output Modalities (models must have all selected):"
+                    "Output Modalities:"
                 }
                 div {
                     class: "modality-toggles",
