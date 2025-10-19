@@ -24,7 +24,10 @@ fn tokenize(input: &str) -> Vec<String> {
         let ch = chars[i];
 
         // Check if this is a delimiter
-        if ch.is_whitespace() || ch == '-' || ch == '_' || ch == '.' || ch == '/' {
+        if ch.is_whitespace() || ch == '-' || ch == '_' || ch == '.' || ch == '/'
+            || ch == '(' || ch == ')' || ch == '[' || ch == ']'
+            || ch == '{' || ch == '}' || ch == ':' || ch == ',' || ch == ';'
+        {
             if !current_token.is_empty() {
                 result.push(current_token.to_lowercase());
                 current_token.clear();
@@ -275,8 +278,11 @@ fn App() -> Element {
     // State for the selected model (for modal display)
     let mut selected_model = use_signal(|| None::<Model>);
 
-    // State for copy button feedback
+    // State for copy button feedback (modal)
     let mut copied = use_signal(|| false);
+
+    // State for copy button feedback (main list) - tracks which slug was copied
+    let mut copied_slug = use_signal(|| None::<String>);
 
     // Fetch models from the API (or load from cache)
     let mut models_resource = use_resource(|| async move {
@@ -729,18 +735,62 @@ fn App() -> Element {
                                                     span { class: "metadata-value price-value", "{format_price_per_million(model.pricing.completion)}" }
                                                 }
 
-                                                // Canonical slug
-                                                div {
-                                                    style: "margin-top: 8px;",
-                                                    div {
-                                                        style: "font-size: 11px; font-weight: 600; color: #7f8c8d; margin-bottom: 4px; text-transform: uppercase;",
-                                                        "Canonical Slug"
-                                                    }
-                                                    div {
-                                                        class: "canonical-slug",
-                                                        "{model.canonical_slug}"
+                                                // Canonical slug with copy button
+                                                {
+                                                    let slug = model.canonical_slug.clone();
+                                                    rsx! {
+                                                        div {
+                                                            style: "margin-top: 8px;",
+                                                            div {
+                                                                style: "font-size: 11px; font-weight: 600; color: #7f8c8d; margin-bottom: 4px; text-transform: uppercase;",
+                                                                "Canonical Slug"
+                                                            }
+                                                            div {
+                                                                class: "canonical-slug-container",
+                                                                div {
+                                                                    class: "canonical-slug",
+                                                                    style: "flex: 1;",
+                                                                    onclick: move |evt: Event<MouseData>| {
+                                                                        evt.stop_propagation();
+                                                                    },
+                                                                    "{slug}"
+                                                                }
+                                                                button {
+                                                                    class: if copied_slug.read().as_ref() == Some(&slug) {
+                                                                        "copy-button copied"
+                                                                    } else {
+                                                                        "copy-button"
+                                                                    },
+                                                                    onclick: move |evt: Event<MouseData>| {
+                                                                        // Stop propagation to prevent modal from opening
+                                                                        evt.stop_propagation();
+
+                                                                        #[cfg(target_arch = "wasm32")]
+                                                                        {
+                                                                            use web_sys::window;
+                                                                            if let Some(window) = window() {
+                                                                                let clipboard = window.navigator().clipboard();
+                                                                                let _ = clipboard.write_text(&slug);
+                                                                                copied_slug.set(Some(slug.clone()));
+
+                                                                                // Reset after 2 seconds
+                                                                                let mut copied_slug_clone = copied_slug;
+                                                                                gloo_timers::callback::Timeout::new(2000, move || {
+                                                                                    copied_slug_clone.set(None);
+                                                                                }).forget();
+                                                                            }
+                                                                        }
+                                                                    },
+                                                            if copied_slug.read().as_ref() == Some(&slug) {
+                                                                "✓ Copied"
+                                                            } else {
+                                                                "Copy"
+                                                            }
+                                                        }
                                                     }
                                                 }
+                                            }
+                                        }
                                             }
                                                 }
                                             }
@@ -1021,5 +1071,152 @@ mod test {
     fn check_parse() {
         let example = include_str!("models.json");
         let _x: ApiResponse = serde_json::from_str(example).unwrap();
+    }
+
+    #[test]
+    fn test_tokenize_basic_spaces() {
+        assert_eq!(tokenize("hello world"), vec!["hello", "world"]);
+        assert_eq!(tokenize("one two three"), vec!["one", "two", "three"]);
+    }
+
+    #[test]
+    fn test_tokenize_existing_delimiters() {
+        // Hyphens
+        assert_eq!(tokenize("foo-bar"), vec!["foo", "bar"]);
+        // Underscores
+        assert_eq!(tokenize("snake_case"), vec!["snake", "case"]);
+        // Dots
+        assert_eq!(tokenize("file.txt"), vec!["file", "txt"]);
+        // Slashes
+        assert_eq!(tokenize("path/to/file"), vec!["path", "to", "file"]);
+    }
+
+    #[test]
+    fn test_tokenize_new_delimiters_parentheses() {
+        // Parentheses - the main bug fix
+        assert_eq!(tokenize("(Nano Banana)"), vec!["nano", "banana"]);
+        assert_eq!(tokenize("Model (v2)"), vec!["model", "v2"]);
+        assert_eq!(tokenize("(test)"), vec!["test"]);
+    }
+
+    #[test]
+    fn test_tokenize_new_delimiters_brackets() {
+        // Square brackets
+        assert_eq!(tokenize("[beta]"), vec!["beta"]);
+        assert_eq!(tokenize("model[2024]"), vec!["model", "2024"]);
+        // Curly braces
+        assert_eq!(tokenize("{test}"), vec!["test"]);
+    }
+
+    #[test]
+    fn test_tokenize_new_delimiters_punctuation() {
+        // Colons
+        assert_eq!(tokenize("Google: Gemini"), vec!["google", "gemini"]);
+        // Commas
+        assert_eq!(tokenize("one,two,three"), vec!["one", "two", "three"]);
+        // Semicolons
+        assert_eq!(tokenize("alpha;beta"), vec!["alpha", "beta"]);
+    }
+
+    #[test]
+    fn test_tokenize_camel_case() {
+        assert_eq!(tokenize("camelCase"), vec!["camel", "case"]);
+        assert_eq!(tokenize("PascalCase"), vec!["pascal", "case"]);
+        assert_eq!(tokenize("XMLHttpRequest"), vec!["xml", "http", "request"]);
+        assert_eq!(tokenize("HTMLElement"), vec!["html", "element"]);
+    }
+
+    #[test]
+    fn test_tokenize_specific_failing_case() {
+        // The actual case that was failing
+        let tokens = tokenize("Google: Gemini 2.5 Flash Image (Nano Banana)");
+        assert_eq!(
+            tokens,
+            vec![
+                "google", "gemini", "2", "5", "flash", "image", "nano", "banana"
+            ]
+        );
+        // Verify "nano" is a standalone token
+        assert!(tokens.contains(&"nano".to_string()));
+    }
+
+    #[test]
+    fn test_tokenize_edge_cases() {
+        // Empty string
+        assert_eq!(tokenize(""), Vec::<String>::new());
+        // Only delimiters
+        assert_eq!(tokenize("---"), Vec::<String>::new());
+        assert_eq!(tokenize("()[]{}"), Vec::<String>::new());
+        // Multiple consecutive delimiters
+        assert_eq!(tokenize("foo---bar"), vec!["foo", "bar"]);
+        assert_eq!(tokenize("a  b"), vec!["a", "b"]);
+        // Mixed delimiters
+        assert_eq!(tokenize("foo-bar_baz.qux"), vec!["foo", "bar", "baz", "qux"]);
+    }
+
+    #[test]
+    fn test_tokenize_case_insensitive() {
+        // All tokens should be lowercase
+        assert_eq!(tokenize("HELLO WORLD"), vec!["hello", "world"]);
+        assert_eq!(tokenize("MixedCase"), vec!["mixed", "case"]);
+    }
+
+    #[test]
+    fn test_tokenize_unicode() {
+        // Basic Unicode support
+        assert_eq!(tokenize("café résumé"), vec!["café", "résumé"]);
+    }
+
+    #[test]
+    fn test_matches_any_token_sequence_single_token() {
+        let tokens = vec!["hello".to_string(), "world".to_string()];
+        // Exact match
+        assert!(matches_any_token_sequence("hello", &tokens));
+        // Prefix match
+        assert!(matches_any_token_sequence("hel", &tokens));
+        assert!(matches_any_token_sequence("wor", &tokens));
+        // No match
+        assert!(!matches_any_token_sequence("xyz", &tokens));
+    }
+
+    #[test]
+    fn test_matches_any_token_sequence_consecutive_tokens() {
+        let tokens = vec!["foo".to_string(), "bar".to_string(), "baz".to_string()];
+        // Concatenation of consecutive tokens
+        assert!(matches_any_token_sequence("foobar", &tokens));
+        assert!(matches_any_token_sequence("barbaz", &tokens));
+        assert!(matches_any_token_sequence("foobarbaz", &tokens));
+        // Prefix of concatenation
+        assert!(matches_any_token_sequence("foob", &tokens));
+    }
+
+    #[test]
+    fn test_matches_any_token_sequence_nano_case() {
+        // Test the specific case that was failing
+        let model_name = "Google: Gemini 2.5 Flash Image (Nano Banana)";
+        let tokens = tokenize(model_name);
+
+        // Should match "nano" now that parentheses are delimiters
+        assert!(matches_any_token_sequence("nano", &tokens));
+        assert!(matches_any_token_sequence("banana", &tokens));
+        assert!(matches_any_token_sequence("nanobanana", &tokens));
+
+        // Should also match other parts
+        assert!(matches_any_token_sequence("google", &tokens));
+        assert!(matches_any_token_sequence("gemini", &tokens));
+        assert!(matches_any_token_sequence("flash", &tokens));
+    }
+
+    #[test]
+    fn test_matches_any_token_sequence_empty() {
+        let tokens = vec!["test".to_string()];
+        // Empty filter matches everything (because "".is_prefix_of(anything) == true)
+        // This is fine because tokenize("") returns an empty vec, so this case doesn't
+        // occur in practice (empty filter list shows all models via .all() returning true)
+        assert!(matches_any_token_sequence("", &tokens));
+
+        // Empty tokens - nothing to match against
+        let empty_tokens: Vec<String> = vec![];
+        assert!(!matches_any_token_sequence("test", &empty_tokens));
     }
 }

@@ -39,6 +39,29 @@ cargo fmt --check
 cargo fmt
 ```
 
+### Running Tests
+
+Due to the default `wasm32-unknown-unknown` target, tests must be run with an explicit native target:
+
+```bash
+# Run tests on native platform
+cargo test --target x86_64-unknown-linux-gnu
+
+# Or for other platforms, use your native target (find with: rustc -vV | grep host)
+cargo test --target $(rustc -vV | grep host | cut -d' ' -f2)
+```
+
+**Why this is needed**: The default build target is `wasm32-unknown-unknown` (see Build Target Configuration below), but test binaries cannot execute directly as WebAssembly. By specifying the native target explicitly, cargo compiles and runs tests on your local platform.
+
+**Optional**: Add an alias to `.cargo/config.toml` for convenience:
+
+```toml
+[alias]
+test-native = "test --target x86_64-unknown-linux-gnu"
+```
+
+Then simply run `cargo test-native`.
+
 ## Build Target Configuration
 
 This project is primarily a web application targeting `wasm32-unknown-unknown`. To ensure consistency between development tools and the actual build:
@@ -126,4 +149,4 @@ The `clippy.toml` file includes critical Dioxus-specific lints:
 
 - **Non-snake-case allowed** (`#![allow(non_snake_case)]`): Required for Dioxus component naming conventions
 - **Single-file architecture**: All code lives in `main.rs` - this is intentional for this educational project
-- **No tests yet**: `serde_json` is in dev-dependencies but no tests are currently implemented
+- **Test target**: Tests must be run with `--target x86_64-unknown-linux-gnu` (or your native target) due to the default wasm32 build target

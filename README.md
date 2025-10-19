@@ -1,16 +1,32 @@
 # Polza AI Model Browser
 
-A web application built with Dioxus that provides an interactive browser for AI models available through the Polza AI API. The application features real-time filtering, responsive design, and elegant error handling.
+A web application built with Dioxus that provides an interactive browser for AI models available through the Polza AI API. The application features intelligent real-time filtering, caching, responsive design, and elegant error handling.
 
 ## Features
 
-- **Real-time Model Filtering**: Filter models by name as you type with instant results
+### Core Functionality
+- **Intelligent Real-time Filtering**: Advanced tokenization-based search that understands:
+  - Multiple word separators (spaces, hyphens, underscores, dots, slashes)
+  - Punctuation (parentheses, brackets, colons, commas, semicolons)
+  - camelCase and PascalCase splitting
+  - Case-insensitive matching
+  - Consecutive token matching
 - **API Integration**: Fetches live data from the Polza AI models endpoint
 - **Smart Data Handling**: Automatically filters out models with empty pricing information
+- **Performance Caching**: 1-hour localStorage cache to minimize API calls and improve load times
+
+### User Interface
+- **Modal Detail Views**: Click any model to see comprehensive details including:
+  - Full pricing breakdown (prompt, completion, images, requests, caching)
+  - Architecture details (input/output modalities)
+  - Provider configuration (context length, max tokens, moderation status)
+  - Supported parameters
+- **Copy to Clipboard**: One-click copying of canonical model slugs
 - **Loading States**: Smooth loading animations while fetching data
 - **Error Recovery**: User-friendly error messages with retry functionality
 - **Responsive Design**: Clean, modern UI that works across different screen sizes
 - **Interactive UI**: Hover effects and smooth transitions for better user experience
+- **Manual Refresh**: Clear cache and reload data with the refresh button
 
 ## Tech Stack
 
@@ -18,20 +34,30 @@ A web application built with Dioxus that provides an interactive browser for AI 
 - **[reqwest](https://docs.rs/reqwest/)**: HTTP client for async API requests
 - **[serde](https://serde.rs/)**: Serialization/deserialization of JSON data
 - **[rust_decimal](https://docs.rs/rust_decimal/)**: Precise decimal handling for pricing information
+- **[time](https://docs.rs/time/)**: Date/time handling and formatting
+- **[gloo-storage](https://docs.rs/gloo-storage/)**: LocalStorage API for web caching (wasm32 only)
+- **[web-sys](https://docs.rs/web-sys/)**: Web APIs for clipboard functionality (wasm32 only)
 
 ## Project Structure
 
 ```
 polza-models/
-├─ assets/          # Static assets (images, fonts, etc.)
+├─ assets/            # Static assets (images, fonts, etc.)
 ├─ src/
-│  └─ main.rs       # Main application file containing:
-│                   #   - Data models (Model, Pricing, Architecture, etc.)
-│                   #   - API integration logic
-│                   #   - UI components and styling
-│                   #   - Application entry point
-├─ Cargo.toml       # Project dependencies and configuration
-└─ README.md        # This file
+│  ├─ main.rs         # Main application file containing:
+│  │                  #   - Data models (Model, Pricing, Architecture, etc.)
+│  │                  #   - Tokenization logic for intelligent filtering
+│  │                  #   - API integration with caching
+│  │                  #   - UI components and styling
+│  │                  #   - Application entry point
+│  │                  #   - Unit tests (15 tests for tokenization & filtering)
+│  └─ models.json     # Sample API response for testing
+├─ .cargo/
+│  └─ config.toml     # Cargo configuration (wasm32 default target)
+├─ clippy.toml        # Clippy lints configuration (Dioxus-specific)
+├─ Cargo.toml         # Project dependencies and configuration
+├─ CLAUDE.md          # Developer guide for AI assistants
+└─ README.md          # This file
 ```
 
 ## API Integration
@@ -39,20 +65,25 @@ polza-models/
 The application connects to the **Polza AI Models API**:
 - **Endpoint**: `https://api.polza.ai/api/v1/models`
 - **Response Format**: JSON array of model objects with pricing and architecture information
-- **Modalities Supported**: Text, Image, File, Embeddings
+- **Modalities Supported**: Text, Image, File, Audio, Embeddings
 
 Each model includes detailed pricing information for:
-- Prompt tokens
-- Completion tokens
-- Image processing
+- Prompt tokens (per 1M tokens)
+- Completion tokens (per 1M tokens)
+- Image processing (per image)
 - Per-request costs
 - Web search functionality
-- Internal reasoning
-- Input cache (read/write)
+- Internal reasoning (per 1M tokens)
+- Input cache read/write (per 1M tokens)
 
 ## Development
 
-### Serving Your App
+### Prerequisites
+
+- [Rust](https://www.rust-lang.org/tools/install) (latest stable)
+- [Dioxus CLI](https://dioxuslabs.com/learn/0.5/getting_started): `cargo install dioxus-cli`
+
+### Running the Application
 
 Run the following command in the root of your project to start developing with the default platform:
 
@@ -62,13 +93,132 @@ dx serve
 
 To run for a different platform, use the `--platform` flag:
 ```bash
-dx serve --platform desktop
-dx serve --platform web
+dx serve --platform web      # WebAssembly (default)
+dx serve --platform desktop  # Native desktop app
 ```
 
 ### Building for Production
 
 ```bash
+# Production build for web (optimized WASM)
 dx build --release
+
+# Production build for desktop
+dx build --release --platform desktop
 ```
 
+### Testing
+
+The project includes comprehensive unit tests for the tokenization and filtering logic (15 tests total).
+
+**Important**: Due to the default `wasm32-unknown-unknown` target, tests must be run with an explicit native target:
+
+```bash
+# Run tests on Linux
+cargo test --target x86_64-unknown-linux-gnu
+
+# Run tests on macOS
+cargo test --target x86_64-apple-darwin
+
+# Or automatically use your native target
+cargo test --target $(rustc -vV | grep host | cut -d' ' -f2)
+```
+
+**Why this is needed**: The project defaults to the `wasm32-unknown-unknown` target for consistent IDE/build behavior. However, test binaries cannot execute as WebAssembly without a runtime, so they must be compiled for your native platform.
+
+**Test Coverage**:
+- `tokenize()` function: Basic tokenization, delimiters, camelCase splitting, edge cases, Unicode support
+- `matches_any_token_sequence()` function: Single token matching, consecutive token matching, prefix matching
+- Integration tests: Real-world filtering scenarios including the parentheses bug fix
+
+### Code Quality
+
+```bash
+# Run Clippy (includes Dioxus-specific lints)
+cargo clippy
+
+# Check code formatting
+cargo fmt --check
+
+# Auto-format code
+cargo fmt
+```
+
+The project uses a `clippy.toml` configuration with important Dioxus-specific lints:
+- Never hold Dioxus signal borrows across await points (prevents runtime panics)
+
+## Advanced Features
+
+### Intelligent Filtering System
+
+The application uses a sophisticated tokenization system that makes searching intuitive and flexible:
+
+**Supported Delimiters**:
+- Whitespace (spaces, tabs, newlines)
+- Punctuation: `-`, `_`, `.`, `/`
+- Brackets: `(`, `)`, `[`, `]`, `{`, `}`
+- Other: `:`, `,`, `;`
+
+**camelCase Splitting**:
+- `XMLHttpRequest` → `["xml", "http", "request"]`
+- `PascalCase` → `["pascal", "case"]`
+
+**Example**: Searching for `"nano"` will match:
+- `"Nano Banana"`
+- `"(Nano Edition)"`
+- `"Model-nano-v2"`
+- `"nanoGPT"`
+
+**Multi-word Filters**: All search terms must match (AND logic)
+- Search: `"google flash"` → Matches: `"Google: Gemini 2.5 Flash"` ✓
+- Search: `"google claude"` → Matches: `"Google: Gemini 2.5 Flash"` ✗
+
+### Caching Strategy
+
+- **Duration**: 1 hour (3600 seconds)
+- **Storage**: Browser localStorage (web platform only)
+- **Invalidation**: Manual refresh button or expired cache
+- **Benefits**: Faster load times, reduced API calls, offline-like experience
+
+## Build Target Configuration
+
+This project uses `wasm32-unknown-unknown` as the default build target (configured in `.cargo/config.toml`). This ensures:
+
+1. **Consistency**: `cargo check`, `cargo clippy`, and IDE analysis use the same target as `dx build`
+2. **Correct Linting**: Dioxus signals have different mutability requirements on wasm32 vs native targets
+3. **IDE Alignment**: rust-analyzer provides accurate diagnostics matching the actual build
+
+**Trade-off**: Tests require explicit native target specification (see Testing section above).
+
+For detailed configuration instructions for different IDEs, see `CLAUDE.md`.
+
+## Platform Support
+
+The project supports multiple platforms through Cargo features:
+
+- `web` (default): WebAssembly for browsers
+  - Includes localStorage caching
+  - Includes clipboard API support
+  - Locale-aware time formatting
+- `desktop`: Native desktop application
+  - Falls back to RFC2822 time formatting
+  - No caching (could be added with file-based cache)
+- `mobile`: Mobile platforms (experimental)
+
+## Contributing
+
+When contributing to this project:
+
+1. Run tests: `cargo test --target $(rustc -vV | grep host | cut -d' ' -f2)`
+2. Run clippy: `cargo clippy`
+3. Format code: `cargo fmt`
+4. Test the app: `dx serve`
+
+## License
+
+[Add your license information here]
+
+## Acknowledgments
+
+- Built with [Dioxus](https://dioxuslabs.com/) 🦀
+- Data from [Polza AI API](https://api.polza.ai/)
