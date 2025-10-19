@@ -47,6 +47,7 @@ A web application built with Dioxus that provides an interactive browser for AI 
 - **[rust_decimal](https://docs.rs/rust_decimal/)**: Precise decimal handling for pricing information
 - **[time](https://docs.rs/time/)**: Date/time handling and formatting
 - **[gloo-storage](https://docs.rs/gloo-storage/)**: LocalStorage API for web caching (wasm32 only)
+- **[gloo-console](https://docs.rs/gloo-console/)**: Console logging for browser debugging (wasm32 only)
 - **[web-sys](https://docs.rs/web-sys/)**: Web APIs for clipboard functionality (wasm32 only)
 
 ## Project Structure
@@ -55,14 +56,35 @@ A web application built with Dioxus that provides an interactive browser for AI 
 polza-models/
 ├─ assets/            # Static assets (images, fonts, etc.)
 ├─ src/
-│  ├─ main.rs         # Main application file containing:
-│  │                  #   - Data models (Model, Pricing, Architecture, etc.)
-│  │                  #   - Tokenization logic for intelligent filtering
-│  │                  #   - API integration with caching
-│  │                  #   - UI components and styling
-│  │                  #   - Application entry point
-│  │                  #   - Unit tests (15 tests for tokenization & filtering)
-│  └─ models.json     # Sample API response for testing
+│  ├─ api/            # API client and data fetching
+│  │  ├─ client.rs    # API endpoint integration
+│  │  └─ mod.rs
+│  ├─ cache/          # Platform-specific caching implementations
+│  │  ├─ wasm.rs      # localStorage-based cache (web)
+│  │  ├─ native.rs    # Native cache implementation
+│  │  └─ mod.rs
+│  ├─ components/     # UI components
+│  │  ├─ app.rs       # Main application component
+│  │  ├─ filters.rs   # Text and modality filter controls
+│  │  ├─ modal.rs     # Model detail modal dialog
+│  │  ├─ model_card.rs    # Individual model display card
+│  │  ├─ model_list.rs    # Model list container
+│  │  ├─ sort_controls.rs # Sort field and direction controls
+│  │  ├─ styles.rs    # Global CSS styles
+│  │  └─ mod.rs
+│  ├─ models/         # Data models and type definitions
+│  │  ├─ api.rs       # API response types
+│  │  ├─ architecture.rs  # Model architecture and modalities
+│  │  ├─ pricing.rs   # Pricing information
+│  │  ├─ ui.rs        # UI-specific types (sorting, etc.)
+│  │  └─ mod.rs
+│  ├─ utils/          # Utility functions
+│  │  ├─ tokenize.rs  # Text tokenization for intelligent filtering
+│  │  ├─ filter.rs    # Filter logic (modality matching)
+│  │  ├─ format.rs    # Formatting utilities (dates, decimals)
+│  │  └─ mod.rs
+│  ├─ lib.rs          # Library root
+│  └─ main.rs         # Application entry point
 ├─ .cargo/
 │  └─ config.toml     # Cargo configuration (wasm32 default target)
 ├─ clippy.toml        # Clippy lints configuration (Dioxus-specific)
