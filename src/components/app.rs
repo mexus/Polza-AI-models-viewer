@@ -1,6 +1,9 @@
 use dioxus::prelude::*;
 use std::collections::{BTreeSet, HashSet};
 
+#[cfg(target_arch = "wasm32")]
+use gloo_console::log;
+
 use crate::api::fetch_models;
 use crate::cache::clear_cache;
 use crate::models::{Modality, Model, SortDirection, SortField};
@@ -31,6 +34,9 @@ pub fn App() -> Element {
     // State for copy button feedback (main list) - tracks which slug was copied
     let copied_slug = use_signal(|| None::<String>);
 
+    // State for refresh button loading indicator
+    let mut is_refreshing = use_signal(|| false);
+
     // Fetch models from the API (or load from cache)
     let mut models_resource = use_resource(|| async move { fetch_models().await });
 
@@ -48,14 +54,46 @@ pub fn App() -> Element {
                     style: "color: #2c3e50; margin: 0;",
                     "Polza AI Models"
                 }
-                button {
-                    class: "retry-button",
-                    style: "padding: 8px 16px; font-size: 13px;",
-                    onclick: move |_| {
-                        clear_cache();
-                        models_resource.restart();
-                    },
-                    "🔄 Refresh"
+                {
+                    // Auto-clear is_refreshing when data loads
+                    use_effect(move || {
+                        // Use .value() to create a reactive subscription
+                        let resource_state = models_resource.value();
+                        if resource_state.read().is_some() && *is_refreshing.peek() {
+                            #[cfg(target_arch = "wasm32")]
+                            log!("[UI] ✓ Data loaded - clearing refresh state");
+                            is_refreshing.set(false);
+                        }
+                    });
+
+                    let is_loading = *is_refreshing.read();
+                    let button_style = if is_loading {
+                        "padding: 8px 16px; font-size: 13px; cursor: not-allowed; opacity: 0.6;"
+                    } else {
+                        "padding: 8px 16px; font-size: 13px;"
+                    };
+
+                    rsx! {
+                        button {
+                            class: "retry-button",
+                            style: "{button_style}",
+                            disabled: is_loading,
+                            onclick: move |_| {
+                                #[cfg(target_arch = "wasm32")]
+                                log!("[UI] 🔄 Refresh button clicked!");
+                                is_refreshing.set(true);
+                                #[cfg(target_arch = "wasm32")]
+                                log!("[UI] ⏳ Loading state: LOADING");
+                                clear_cache();
+                                models_resource.restart();
+                            },
+                            if is_loading {
+                                "⏳ Refreshing..."
+                            } else {
+                                "🔄 Refresh"
+                            }
+                        }
+                    }
                 }
             }
 
