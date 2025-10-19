@@ -23,7 +23,7 @@ jobs:
           targets: wasm32-unknown-unknown
 
       - name: Setup Dioxus CLI
-        run: cargo install dioxus-cli
+        run: cargo install --locked dioxus-cli
 
       - name: Cache cargo registry
         uses: actions/cache@v4
