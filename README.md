@@ -114,7 +114,7 @@ Each model includes detailed pricing information for:
 ### Prerequisites
 
 - [Rust](https://www.rust-lang.org/tools/install) (latest stable)
-- [Dioxus CLI](https://dioxuslabs.com/learn/0.5/getting_started): `cargo install dioxus-cli`
+- [Dioxus CLI](https://dioxuslabs.com/learn/0.6/getting_started): `cargo install dioxus-cli`
 
 ### Running the Application
 
