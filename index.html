@@ -1,25 +1,13 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>polza-models</title>
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta charset="UTF-8" />
-  <link rel="preload" as="script" href="/Polza-AI-models-viewer/assets/polza-models-da5299b405d3d025.js" crossorigin><link rel="preload" as="fetch" type="application/wasm" href="/Polza-AI-models-viewer/assets/polza-models_bg-f0b028ba3291db5e.wasm" crossorigin></head>
-  <body>
-    <div id="main"></div>
-  <script>
-            // We can't use a module script here because we need to start the script immediately when streaming
-            import("/Polza-AI-models-viewer/assets/polza-models-da5299b405d3d025.js").then(
-                ({ default: init }) => {
-                init("/Polza-AI-models-viewer/assets/polza-models_bg-f0b028ba3291db5e.wasm").then((wasm) => {
-                    if (wasm.__wbindgen_start == undefined) {
-                    wasm.main();
-                    }
-                });
-                }
-            );
-            </script>
-            
+    <head>
+        <title>polza-models</title>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta charset="UTF-8">
+    <link rel="preload" as="script" href="/Polza-AI-models-viewer/assets/polza-models-dxhcf02b16c9223adb.js" crossorigin></head>
+    <body>
+        <div id="main"></div>
+    <script type="module" async src="/Polza-AI-models-viewer/assets/polza-models-dxhcf02b16c9223adb.js"></script>
             </body>
 </html>
