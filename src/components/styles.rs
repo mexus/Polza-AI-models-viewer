@@ -93,6 +93,7 @@ pub fn GlobalStyles() -> Element {
             .modality-badge.file {{ background: #e67e22; color: white; }}
             .modality-badge.embeddings {{ background: #1abc9c; color: white; }}
             .modality-badge.audio {{ background: #e74c3c; color: white; }}
+            .modality-badge.video {{ background: #f1c40f; color: white; }}
 
             .modality-badge-outline {{
                 display: inline-block;
@@ -110,6 +111,7 @@ pub fn GlobalStyles() -> Element {
             .modality-badge-outline.file {{ border-color: #e67e22; color: #e67e22; }}
             .modality-badge-outline.embeddings {{ border-color: #1abc9c; color: #1abc9c; }}
             .modality-badge-outline.audio {{ border-color: #e74c3c; color: #e74c3c; }}
+            .modality-badge-outline.video {{ border-color: #f1c40f; color: #f1c40f; }}
 
             .modality-separator {{
                 display: inline-flex;
@@ -196,6 +198,10 @@ pub fn GlobalStyles() -> Element {
 
             .modality-toggle-button.active.audio {{
                 background: #e74c3c;
+            }}
+
+            .modality-toggle-button.active.video {{
+                background: #f1c40f;
             }}
 
             .sort-controls-container {{
