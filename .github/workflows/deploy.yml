@@ -41,7 +41,7 @@ jobs:
 
       - name: Install Dioxus CLI
         if: steps.cache-dx.outputs.cache-hit != 'true'
-        run: curl -sSL http://dioxus.dev/install.sh | sh
+        run: curl -sSL http://dioxus.dev/install.sh | bash
 
       - name: Configure base_path for GitHub Pages
         run: |
