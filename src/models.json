@@ -48,6 +48,50 @@
       ]
     },
     {
+      "id": "nvidia/nemotron-nano-12b-v2-vl",
+      "canonical_slug": "nvidia/nemotron-nano-12b-v2-vl",
+      "name": "NVIDIA: Nemotron Nano 12B 2 VL",
+      "created": 1761675565,
+      "context_length": 131072,
+      "architecture": {
+        "input_modalities": ["image", "text", "video"],
+        "output_modalities": ["text"],
+        "tokenizer": "Other",
+        "instruct_type": null
+      },
+      "pricing": {
+        "prompt": "0.00001771",
+        "completion": "0.00005313",
+        "image": "0.00000000",
+        "request": "0.00000000",
+        "web_search": "0.00000000",
+        "internal_reasoning": "0.00000000",
+        "input_cache_read": "0.00000000",
+        "input_cache_write": "0.00000000"
+      },
+      "top_provider": {
+        "context_length": 131072,
+        "max_completion_tokens": 0,
+        "is_moderated": false
+      },
+      "per_request_limits": null,
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "max_tokens",
+        "min_p",
+        "presence_penalty",
+        "reasoning",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "temperature",
+        "top_k",
+        "top_p"
+      ]
+    },
+    {
       "id": "openai/gpt-5-image-mini",
       "canonical_slug": "openai/gpt-5-image-mini",
       "name": "OpenAI: GPT-5 Image Mini",

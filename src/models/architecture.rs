@@ -14,4 +14,5 @@ pub enum Modality {
     File,
     Audio,
     Embeddings,
+    Video,
 }
